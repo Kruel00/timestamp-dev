@@ -38,12 +38,6 @@ long int timestamp;
   } ntp_packet;             
 
 
-void error( char* msg )
-{
-    perror( msg );
-    exit( 0 ); 
-}
-
 
 void *timeout_server()
 {
@@ -52,7 +46,7 @@ void *timeout_server()
   int portno = 123; // NTP UDP port number.
 
   //char* host_name = "pxe.server"; // NTP server host-name.
-  char* host_name = "pxes.server"; // NTP server host-name.
+  char* host_name = "pxe.server"; // NTP server host-name.
   
   ntp_packet packet = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
