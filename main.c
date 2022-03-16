@@ -9,7 +9,6 @@ int main()
    system("clear");
    time_t timestamp = get_pxe_server_timestamp();
 
-   /*
    GDateTime *utc_current_time = g_date_time_new_now_utc();
    gint64 seconds_utc_current_time_from_lib = g_date_time_to_unix(utc_current_time);
    gint64 seconds_utc_current_time_from_server = timestamp;
@@ -20,8 +19,8 @@ int main()
    GDateTime *gdate = g_date_time_new_from_unix_local(timestamp);
    gint64 seconds_utc_current_time = g_date_time_to_unix(gdate);
    printf("converted gdate to long: %li\n",seconds_utc_current_time);
-   */
-
+   
+   
    printf("fin de programa....");
    return 0;
 }
