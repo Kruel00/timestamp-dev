@@ -59,15 +59,7 @@ void *timeout_server()
   printf("conextando al server %s\n",host_name );
 
   server = gethostbyname( host_name ); // Convert URL to IP.
-  if(!server){
-    printf("fa");
-  }
-
-  /*
-  if(server = NULL){
-    timestamp = 99;
-  }*/
-
+  
   bzero( ( char* ) &serv_addr, sizeof( serv_addr ) );
   serv_addr.sin_family = AF_INET;
   bcopy( ( char* )server->h_addr, ( char* ) &serv_addr.sin_addr.s_addr, server->h_length );
