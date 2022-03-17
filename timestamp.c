@@ -8,82 +8,86 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #include <pthread.h>
+#include <glib.h>
+#include <arpa/inet.h>
+
+#include "timestamp.h"
+
 
 #define NTP_TIMESTAMP_DELTA 2208988800ull
+#define PXE_SERVER_ADRESS "pxe.server"
 
 #define LI(packet)   (uint8_t) ((packet.li_vn_mode & 0xC0) >> 6) 
 #define VN(packet)   (uint8_t) ((packet.li_vn_mode & 0x38) >> 3) 
 #define MODE(packet) (uint8_t) ((packet.li_vn_mode & 0x07) >> 0) 
 
 long int timestamp;
-
-  typedef struct
-  {
-    uint8_t li_vn_mode;      
-    uint8_t stratum;         
-    uint8_t poll;            
-    uint8_t precision;       
-    uint32_t rootDelay;      
-    uint32_t rootDispersion; 
-    uint32_t refId;          
-    uint32_t refTm_s;        
-    uint32_t refTm_f;        
-    uint32_t origTm_s;       
-    uint32_t origTm_f;       
-    uint32_t rxTm_s;         
-    uint32_t rxTm_f;         
-    uint32_t txTm_s;         
-    uint32_t txTm_f;         
-
-  } ntp_packet;             
-
-
+ntp_server_t timestam;
+ntp_packet packet = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+int sockfd, n; 
+int portno = 123; 
+struct hostent *server;   
+struct sockaddr_in serv_addr;
 
 void *timeout_server()
 {
-  int sockfd, n; // Socket file descriptor and the n return result from writing/reading from the socket.
-
-  int portno = 123; // NTP UDP port number.
-
-  //char* host_name = "pxe.server"; // NTP server host-name.
-  char* host_name = "pxe.server"; // NTP server host-name.
-  
-  ntp_packet packet = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  void init_server(ntp_server_t * server_stats);
 
   memset( &packet, 0, sizeof( ntp_packet ) );
   *( ( char * ) &packet + 0 ) = 0x1b;
-  struct sockaddr_in serv_addr; 
-  struct hostent *server;      
 
+  printf("creando soket...\n");
   sockfd = socket( AF_INET, SOCK_DGRAM, IPPROTO_UDP ); // Create a UDP socket.
-  printf("conextando al server %s\n",host_name );
+  if (sockfd < 0)
+        printf("error al crear el soket\n");
 
-  server = gethostbyname( host_name ); // Convert URL to IP.
-  
+  printf("conectando al server %s\n",PXE_SERVER_ADRESS );
+  char *IPbuffer;
+  IPbuffer = inet_ntoa(*((struct in_addr*)
+                           server->h_addr_list[0]));
+  printf("direccion %s\n",IPbuffer);
+
   bzero( ( char* ) &serv_addr, sizeof( serv_addr ) );
   serv_addr.sin_family = AF_INET;
   bcopy( ( char* )server->h_addr, ( char* ) &serv_addr.sin_addr.s_addr, server->h_length );
+
   serv_addr.sin_port = htons( portno );
+
+  if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+      printf("error al conectar");
+
+  printf("enviando paquete...\n");
   n = write( sockfd, ( char* ) &packet, sizeof( ntp_packet ) );
+  printf("Paquete enviado...%i\n",n);
+
   n = read( sockfd, ( char* ) &packet, sizeof( ntp_packet ) );
+
+  printf("paquete recivido...\n");
   packet.txTm_s = ntohl( packet.txTm_s ); // Time-stamp seconds.
 
   timestamp = ( time_t ) ( packet.txTm_s - NTP_TIMESTAMP_DELTA );
-  
+
+  printf("asjdkhasjdh %li\n",timestamp);
+
 }
   
 
 time_t get_pxe_server_timestamp(){
-
-  timestamp = time(0);
-    pthread_t thread_id;
-
-    pthread_create(&thread_id,NULL,*timeout_server,NULL);
-    //pthread_join(thread_id,NULL);
-  sleep(3);
   
+  server = gethostbyname(PXE_SERVER_ADRESS);
+  if(server == NULL)
+    return EXIT_FAILURE;
+  
+  pthread_t thread_id;
+  pthread_create(&thread_id,NULL,*timeout_server,NULL);  
+  sleep(3);
+  pthread_cancel(thread_id);
   return timestamp;
-
 }
 
 
+void init_server(ntp_server_t * const server){
+    server->adress[0] = '\0';
+    server->portn = 0U;
+    server->timestamp = 0UL; 
+}

@@ -31,6 +31,7 @@
     "timestamp.h": "c",
     "socket.h": "c",
     "stdio.h": "c",
-    "time.h": "c"
+    "time.h": "c",
+    "math.h": "c"
   }
 }
